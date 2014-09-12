@@ -1,0 +1,13 @@
+Entities,Rule,Rank
+A,Rule_1,1
+B,Rule_1,1
+C,Rule_1,2
+D,Rule_1,1
+E,Rule_1,2
+F,Rule_1,3
+A,Rule_2,3
+B,Rule_2,1
+C,Rule_2,2
+D,Rule_2,1
+E,Rule_2,2
+F,Rule_2,1
