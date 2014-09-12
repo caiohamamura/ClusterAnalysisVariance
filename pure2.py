@@ -1,6 +1,6 @@
 import gdal, os, numpy as np, sys, pandas as pd, gc
 gc.enable()
-def CalculateDistribution(arr, mask=None, weight=2):
+def CalculateDistribution(arr, mask=None, weight=1):
     #Mascara
     if mask == None:
         maskarr = np.ma.masked_values(arr, 255)

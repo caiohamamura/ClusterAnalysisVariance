@@ -37,10 +37,7 @@ def CalculateDistribution(arr, mask=None, weight=1):
     return 1-(var/varmax)**(1./weight)
 
 def doit(rastInput, output, ratio, valores={1:254,2:127,3:25}, percent=0.5):
-    # rastInput = 'C:\\Users\\Caio\\Box Sync\\Artigo Lea\\recorte_brandina.tif'
-    # valores = {1:254,2:127,3:25}
-    # percent = 0.5
-    # ratio = 100
+    #Get raster parameters
     tif = gdal.Open(rastInput)
     driver = tif.GetDriver()
     xsize = tif.RasterXSize
@@ -55,28 +52,55 @@ def doit(rastInput, output, ratio, valores={1:254,2:127,3:25}, percent=0.5):
     geoTransform = tuple(geoTransform)
     projection = tif.GetProjectionRef()
     b = tif.GetRasterBand(1)
+    
+    #calculate new shape
     shape0 = ysize/ratio*ratio
     shape1 = xsize/ratio*ratio
+    
+    #new size
     size=shape0*shape1
+    
     arr = b.ReadAsArray()
+    
+    #Cut borders in both sides to make it divisible
     arr = arr[int(ySizeDesloc):shape0+int(ySizeDesloc),int(xSizeDesloc):shape1+int(xSizeDesloc)].reshape(shape0*shape1,)
+    
+    #Map indexes to values and 0&255 to 255
     for (k,v) in valores.iteritems():
-        arr[arr==k]=v
-
+        test = (arr==k)
+        try:
+            boolcum = np.logical_or(test, boolcum)
+        except:
+            boolcum = (test)
+        arr[test]=v
     arr[arr==0]=255
-    arr[arr<25]=0
+    boolcum = np.logical_or(boolcum,arr==255)
+    arr[np.logical_not(boolcum)]=0
     mask = arr!=255
+    
+    #Create a grid of groups based on indices
     indices=np.indices((shape0, shape1))/ratio
     shape0,shape1 =shape0/ratio, shape1/ratio
     groups = (indices[1]+indices[0]*shape1).reshape(size,)
     groups[mask==False] = groups.max()+1
+    
+    #Count how many times number of ocurrences in group
     maskcount=np.bincount(groups,mask)
+    #Only consider groups where at least [percent] os pixels are filled
     maskresult=maskcount>=ratio**2*percent
+    
+    #Sum values in group
     result=np.bincount(groups,arr)
+    
+    #Divide sum by n only where there is value
     result[maskresult] = ((result[maskresult]/maskcount[maskresult])+0.5)
+    
+    #Where there isn't value just put 255
     result[maskresult==False]=255
     result=result[:-1]
     result=(result.astype(int)).reshape(shape0,shape1)
+    
+    #Save results to a raster
     out = driver.Create(str(output), xsize/ratio, ysize/ratio, 1, gdal.GDT_Byte)
     out.SetGeoTransform(geoTransform)
     out.SetProjection(projection)
@@ -89,11 +113,13 @@ def doit(rastInput, output, ratio, valores={1:254,2:127,3:25}, percent=0.5):
     out = None
     return CalculateDistribution(result)
     
+
+#Run this when script is run    
 curDir = os.getcwd()
 prevDir = '\\'.join(curDir.split('\\')[:-1])
 recortes = ['recorte_paineiras','recorte_cambui','recorte_centro1', 'brandina', 'recorte_brandina']
 ratio = int(sys.argv[1])
-valores={1:254,2:127,3:0}
+valores={1:254,2:127,3:25}
 try:
     percent=1-float(sys.argv[2])
 except:
