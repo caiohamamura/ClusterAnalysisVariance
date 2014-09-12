@@ -128,7 +128,7 @@ for i in range(5):
     nome = recortes[i]    
     input = prevDir+'\\'+nome+'.tif'
     dir = os.path.dirname(input)+'/'
-    output = dir+'\\'+nome+str(ratio)+'.tif'
+    output = prevDir+'\\'+nome+str(ratio)+'.tif'
     print nome+": "+str(doit(input,output,ratio,valores,percent))
 gc.collect()
 del gdal, os, np, sys, gc
